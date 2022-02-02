@@ -17,7 +17,7 @@ var Command = &commands.YAGCommand{
 		info := fmt.Sprintf(`**JARVIS - Just A Rather Very Intelligent System**
 This bot focuses on being configurable and therefore is one of the more advanced bots.
 It can perform a range of general purpose functionality (Reddit feeds, various commands, moderation utilities, automoderator functionality and so on) and it's configured through a web control panel.
-I'm currently being run and developed by Jonas747#0001 (105487308693757952) but the bot is open source (<https://github.com/botlabs-gg/yagpdb>), so if you know Go and want to make some contributions, feel free to make a PR.
+The bot is run by Botlabs but is open source (<https://github.com/botlabs-gg/yagpdb>), so if you know Go and want to make some contributions, feel free to make a PR.
 Control panel: <https://%s/manage>
 				`, common.ConfHost.GetString())
 

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/botlabs-gg/yagpdb/bot"
 	"github.com/botlabs-gg/yagpdb/common"
 	"github.com/jonas747/discordgo/v2"
 )
@@ -171,6 +172,8 @@ func CreateEmbed(values ...interface{}) (*discordgo.MessageEmbed, error) {
 	switch t := values[0].(type) {
 	case SDict:
 		m = t
+	case *SDict:
+		m = *t
 	case map[string]interface{}:
 		m = t
 	case *discordgo.MessageEmbed:
@@ -304,7 +307,7 @@ func indirect(v reflect.Value) (rv reflect.Value, isNil bool) {
 
 // in returns whether v is in the set l.  l may be an array or slice.
 func in(l interface{}, v interface{}) bool {
-	lv := reflect.ValueOf(l)
+	lv, _ := indirect(reflect.ValueOf(l))
 	vv := reflect.ValueOf(v)
 
 	switch lv.Kind() {
@@ -348,7 +351,7 @@ func in(l interface{}, v interface{}) bool {
 // in returns whether v is in the set l. l may only be a slice of strings, or a string, v may only be a string
 // it differs from "in" because its case insensitive
 func inFold(l interface{}, v string) bool {
-	lv := reflect.ValueOf(l)
+	lv, _ := indirect(reflect.ValueOf(l))
 	vv := reflect.ValueOf(v)
 
 	switch lv.Kind() {
@@ -512,6 +515,15 @@ func tmplSqrt(arg interface{}) float64 {
 		return math.Sqrt(ToFloat64(arg))
 	default:
 		return math.Sqrt(-1)
+	}
+}
+
+func tmplCbrt(arg interface{}) float64 {
+	switch arg.(type) {
+	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+		return math.Cbrt(ToFloat64(arg))
+	default:
+		return math.NaN()
 	}
 }
 
@@ -715,14 +727,11 @@ func shuffle(seq interface{}) (interface{}, error) {
 		return nil, errors.New("can't iterate over a nil value")
 	}
 
-	switch seqv.Kind() {
-	case reflect.Array, reflect.Slice, reflect.String:
-		// okay
-	default:
+	if seqv.Kind() != reflect.Slice {
 		return nil, errors.New("can't iterate over " + reflect.ValueOf(seq).Type().String())
 	}
 
-	shuffled := reflect.MakeSlice(reflect.TypeOf(seq), seqv.Len(), seqv.Len())
+	shuffled := reflect.MakeSlice(seqv.Type(), seqv.Len(), seqv.Len())
 
 	rand.Seed(time.Now().UTC().UnixNano())
 	randomIndices := rand.Perm(seqv.Len())
@@ -908,6 +917,10 @@ func tmplFormatTime(t time.Time, args ...string) string {
 	return t.Format(layout)
 }
 
+func tmplSnowflakeToTime(v interface{}) time.Time {
+	return bot.SnowflakeToTime(ToInt64(v)).UTC()
+}
+
 type variadicFunc func([]reflect.Value) (reflect.Value, error)
 
 // callVariadic allows the given function to be called with either a variadic
@@ -1012,6 +1025,11 @@ func tmplNewDate(year, monthInt, day, hour, min, sec int, location ...string) (t
 	}
 
 	return time.Date(year, month, day, hour, min, sec, 0, loc), nil
+}
+
+func tmplWeekNumber(t time.Time) (week int) {
+	_, week = t.ISOWeek()
+	return
 }
 
 func tmplHumanizeDurationHours(in time.Duration) string {
