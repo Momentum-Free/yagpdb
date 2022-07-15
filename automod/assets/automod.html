@@ -15,6 +15,10 @@
     margin-bottom: 5px;
 }
 
+.automod-options-column > div {
+   margin-top: 5px;
+}
+
 @media(min-width: 1024px) {
     .automod-type-column {
         width: 17em;
@@ -206,7 +210,7 @@ table{
 {{range $i, $rule := .CurrentRuleset.R.RulesetAutomodRules}}
 <div class="row">
     <div class="col">
-        <form action="/manage/{{$dot.ActiveGuild.ID}}/automod/ruleset/{{$dot.CurrentRuleset.ID}}/rule/{{.ID}}/update" method="post" data-async-form>
+        <form action="/manage/{{$dot.ActiveGuild.ID}}/automod/ruleset/{{$dot.CurrentRuleset.ID}}/rule/{{.ID}}/update" method="post" data-async-form data-async-form-alertsonly>
             <!-- Pressing enter uses the first button for some reason -->
             <button class="hidden" type="submit"></button>
 
@@ -298,7 +302,7 @@ table{
                     <div class="pull-right">
                         <button type="submit" class="btn btn-danger" formaction="/manage/{{$dot.ActiveGuild.ID}}/automod/list/{{.ID}}/delete">Delete</button>
                     </div>
-                    <h2 class="card-title">List: {{.Name}}</h2>
+                    <h2 class="card-title">List: <span contenteditable="true" data-content-editable-form="Name" class="content-editable-form">{{.Name}}</span></h2>
                 </header>
                 <div class="card-body">
                     <div class="form-group">
@@ -349,7 +353,6 @@ $(function(){
         options: JSON.parse({{json .UserSettings}})
     }
     {{end}}
-    console.log(partMap)
 
     function namePrefixFromKind(kind){
         namePrefix = "Triggers."
@@ -370,7 +373,6 @@ $(function(){
         var rowIndex = tbody.children().length;
         var row = createPartRow(kind, rowIndex)
 
-        console.log("Creating new: ", kind, rowIndex)
         tbody.append(row);
     })
 
@@ -426,7 +428,7 @@ $(function(){
         typeDropdownCell.find("[data-toggle='tooltip']").detach()
 
         if(partMap[typSelectVal] && partMap[typSelectVal].description){
-            var span = $('<span data-toggle="tooltip" data-placement="bottom"><i class="fas fa-question"></i></span>')
+            var span = $('<span class="question-tooltip" data-toggle="tooltip" data-placement="bottom"><i class="fas fa-question"></i></span>')
             span.attr("title", partMap[typSelectVal].description)
             span.tooltip();
 
@@ -492,6 +494,10 @@ $(function(){
                 input.attr("value", opt.Default)
             }
 
+            if(opt.Placeholder){
+                input.attr("placeholder", opt.Placeholder)
+            }
+
             column.append(input)
             break;
         case "string":
@@ -506,6 +512,10 @@ $(function(){
 
             if(opt.Default){
                 input.attr("value", opt.Default)
+            }
+
+            if(opt.Placeholder){
+                input.attr("placeholder", opt.Placeholder)
             }
 
             column.append(input)
@@ -581,7 +591,7 @@ $(function(){
                 <option value="{{.ID}}" {{if eq $selected .ID}} selected {{end}} title="{{.Part.Description}}">{{.Part.Name}}</option>
                 {{end}}{{end}}
             </select>
-            {{if .partType.Description}}<span data-toggle="tooltip" data-placement="bottom" title="{{.partType.Description}}"><i class="fas fa-question"></i></span>{{end}}
+            {{if .partType.Description}}<span class="question-tooltip" data-toggle="tooltip" data-placement="bottom" title="{{.partType.Description}}"><i class="fas fa-question"></i></span>{{end}}
         </div>
     </td>
     <td class="automod-options-column">

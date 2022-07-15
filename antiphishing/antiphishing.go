@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/botlabs-gg/yagpdb/common"
+	"github.com/botlabs-gg/yagpdb/v2/common"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -46,6 +46,7 @@ var (
 )
 
 const RedisKeyPhishingDomains = "phishing_domains"
+const PhishingCheckTrustRatingThreshold = 0.5
 
 var logger = common.GetPluginLogger(&Plugin{})
 
@@ -159,6 +160,7 @@ func checkCacheForPhishingDomain(link string) (bool, error) {
 	if len(domain) == 0 {
 		return false, nil
 	}
+	domain = strings.ToLower(domain)
 	err := common.RedisPool.Do(radix.FlatCmd(&isBadDomain, "SISMEMBER", RedisKeyPhishingDomains, domain))
 	if err != nil {
 		logrus.WithError(err).Error(`[antiphishing] failed to check for phishing domains, error from cache`)
@@ -232,10 +234,18 @@ func queryPhishingLinks(input []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if bitflowAntifishResponse.Match {
-		return bitflowAntifishResponse.Matches[0].URL, err
-	}
 
+	badDomains := make([]string, len(bitflowAntifishResponse.Matches))
+	if bitflowAntifishResponse.Match {
+		for _, match := range bitflowAntifishResponse.Matches {
+			// only flag domains which have a low trust rating, this varies between 0 and 1, 0 means high trust, 1 means no trust.
+			// we use PhishingCheckTrustRatingThreshold (0.5) as cutoff to make sure false positives are ignored.
+			if match.TrustRating > PhishingCheckTrustRatingThreshold {
+				badDomains = append(badDomains, match.Domain)
+			}
+		}
+		return strings.Join(badDomains, ","), err
+	}
 	return "", nil
 }
 

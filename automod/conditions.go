@@ -3,8 +3,8 @@ package automod
 import (
 	"time"
 
-	"github.com/botlabs-gg/yagpdb/bot"
-	"github.com/botlabs-gg/yagpdb/common"
+	"github.com/botlabs-gg/yagpdb/v2/bot"
+	"github.com/botlabs-gg/yagpdb/v2/common"
 )
 
 type Condition interface {
@@ -529,7 +529,7 @@ func (mc *MessageEditedCondition) Name() string {
 
 func (mc *MessageEditedCondition) Description() string {
 	if mc.NewMessage {
-		return "Ignore edited messages"
+		return "Only examine new messages"
 	}
 	return "Only examine edited messages"
 }
